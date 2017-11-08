@@ -1,4 +1,12 @@
-module SvgParser exposing (SvgNode(..), Element, SvgAttribute, parseToNode, parse)
+module SvgParser
+    exposing
+        ( SvgNode(..)
+        , Element
+        , SvgAttribute
+        , parseToNode
+        , nodeToSvg
+        , parse
+        )
 
 {-| String to SVG parser
 
@@ -10,7 +18,7 @@ module SvgParser exposing (SvgNode(..), Element, SvgAttribute, parseToNode, pars
 
 # Parsing
 
-@docs parse, parseToNode
+@docs parse, parseToNode, nodeToSvg
 
 -}
 
@@ -141,6 +149,8 @@ elementToSvg element =
         (List.map nodeToSvg element.children)
 
 
+{-| Convert `SvgNode` to `Svg msg`. This is useful when you want to manipulate `SvgNode` before conveting to `Html msg`.
+-}
 nodeToSvg : SvgNode -> Svg msg
 nodeToSvg svgNode =
     case svgNode of
