@@ -156,7 +156,8 @@ nodeToSvg svgNode =
 
 {-| Parses `String` to `SvgNode`. Normally you will use `parse` instead of this.
 
-    parse "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>" === Ok (SvgElement (Element "svg" [("xmlns", "http://www.w3.org/2000/svg")] []))
+    parse "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+        == Ok (SvgElement (Element "svg" [("xmlns", "http://www.w3.org/2000/svg")] []))
 
 -}
 parseToNode : String -> Result String SvgNode
