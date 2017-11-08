@@ -1,0 +1,20 @@
+{
+    "version": "0.0.1",
+    "summary": "Test Suites of elm-svg-parser",
+    "repository": "https://github.com/rnons/elm-svg-parser.git",
+    "license": "BSD3",
+    "source-directories": [
+        "../src",
+        "."
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-community/elm-test": "4.0.0 <= v < 5.0.0",
+        "elm-community/parser-combinators": "1.1.0 <= v < 2.0.0",
+        "elm-lang/core": "5.1.1 <= v < 6.0.0",
+        "elm-lang/html": "2.0.0 <= v < 3.0.0",
+        "elm-lang/svg": "2.0.0 <= v < 3.0.0",
+        "elm-lang/virtual-dom": "2.0.4 <= v < 3.0.0"
+    },
+    "elm-version": "0.18.0 <= v < 0.19.0"
+}
