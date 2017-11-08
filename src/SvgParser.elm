@@ -4,8 +4,9 @@ module SvgParser
         , Element
         , SvgAttribute
         , parseToNode
-        , nodeToSvg
         , parse
+        , nodeToSvg
+        , toAttribute
         )
 
 {-| String to SVG parser
@@ -18,7 +19,7 @@ module SvgParser
 
 # Parsing
 
-@docs parse, parseToNode, nodeToSvg
+@docs parse, parseToNode, nodeToSvg, toAttribute
 
 -}
 
@@ -137,15 +138,17 @@ nodeParser =
                 ]
 
 
-attributeToProperty : SvgAttribute -> Attribute msg
-attributeToProperty ( name, value ) =
+{-| Convert `SvgAttribute` to `Attribute msg`. This is useful when you want to manipulate `SvgAttribute` before converting to `Html msg`.
+-}
+toAttribute : SvgAttribute -> Attribute msg
+toAttribute ( name, value ) =
     attribute name value
 
 
 elementToSvg : Element -> Svg msg
 elementToSvg element =
     node element.name
-        (List.map attributeToProperty element.attributes)
+        (List.map toAttribute element.attributes)
         (List.map nodeToSvg element.children)
 
 
@@ -190,7 +193,7 @@ parse input =
                 SvgElement element ->
                     if element.name == "svg" then
                         Ok <|
-                            svg (List.map attributeToProperty element.attributes)
+                            svg (List.map toAttribute element.attributes)
                                 (List.map nodeToSvg element.children)
                     else
                         Err "Top element is not svg"
