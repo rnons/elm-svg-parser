@@ -167,6 +167,17 @@ nodeToSvg svgNode =
             text ""
 
 
+{-| Parse xml declaration
+-}
+xmlDeclarationParser : Parser s String
+xmlDeclarationParser =
+    String.fromList
+        <$> (whitespace
+                *> string "<?xml"
+                *> manyTill anyChar (string "?>")
+            )
+
+
 {-| Parses `String` to `SvgNode`. Normally you will use `parse` instead of this.
 
     parse "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
@@ -175,7 +186,7 @@ nodeToSvg svgNode =
 -}
 parseToNode : String -> Result String SvgNode
 parseToNode input =
-    case Combine.runParser nodeParser [] input of
+    case Combine.runParser (optional "" xmlDeclarationParser *> nodeParser) [] input of
         Ok ( _, _, svgNode ) ->
             Ok svgNode
 

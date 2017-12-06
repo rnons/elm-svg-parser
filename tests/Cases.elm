@@ -3,6 +3,25 @@ module Cases exposing (all)
 import SvgParser exposing (..)
 
 
+withVersionDoc : String
+withVersionDoc =
+    """
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg width="24" height="24" viewBox="0 0 24 24">
+</svg>
+     """
+
+
+withVersionElement : Element
+withVersionElement =
+    Element "svg"
+        [ ( "width", "24" )
+        , ( "height", "24" )
+        , ( "viewBox", "0 0 24 24" )
+        ]
+        []
+
+
 motorcycleIcon : String
 motorcycleIcon =
     """
@@ -57,5 +76,6 @@ motorcycleElement =
 
 
 all =
-    [ ( "motocycle icon", motorcycleIcon, motorcycleElement )
+    [ ( "with version doc", withVersionDoc, withVersionElement )
+    , ( "motocycle icon", motorcycleIcon, motorcycleElement )
     ]
