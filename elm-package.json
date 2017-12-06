@@ -1,5 +1,5 @@
 {
-    "version": "1.2.0",
+    "version": "1.2.1",
     "summary": "parse String to SVG",
     "repository": "https://github.com/rnons/elm-svg-parser.git",
     "license": "BSD3",
