@@ -1,13 +1,7 @@
-module SvgParser
-    exposing
-        ( SvgNode(..)
-        , Element
-        , SvgAttribute
-        , parseToNode
-        , parse
-        , nodeToSvg
-        , toAttribute
-        )
+module SvgParser exposing
+    ( SvgNode(..), Element, SvgAttribute
+    , parse, parseToNode, nodeToSvg, toAttribute
+    )
 
 {-| String to SVG parser
 
@@ -26,7 +20,7 @@ module SvgParser
 import Combine exposing (..)
 import Combine.Char exposing (anyChar)
 import Html exposing (Html)
-import Svg exposing (Svg, Attribute, svg, node, text)
+import Svg exposing (Attribute, Svg, node, svg, text)
 import VirtualDom exposing (attribute)
 
 
@@ -44,7 +38,7 @@ type SvgNode
 
 will be parsed as
 
-    Element "svg" [("xmlns", "http://www.w3.org/2000/svg")] []
+    Element "svg" [ ( "xmlns", "http://www.w3.org/2000/svg" ) ] []
 
 -}
 type alias Element =
@@ -59,124 +53,152 @@ type alias Element =
 type alias SvgAttribute =
     ( String, String )
 
+
+
 -- this function was removed in 0.19 of elm.
-flip : (a -> b -> c) -> b -> a -> c 
-flip func b a = func a b
+
+
+flip : (a -> b -> c) -> b -> a -> c
+flip func b a =
+    func a b
+
+
 
 -- from deprecated operator (*>)
-andMapRight : Parser s x -> Parser s a -> Parser s a 
-andMapRight lp rp = lp
-    |> map (flip always)
-    |> andMap rp 
+
+
+andMapRight : Parser s x -> Parser s a -> Parser s a
+andMapRight lp rp =
+    lp
+        |> map (flip always)
+        |> andMap rp
+
+
 
 --from deprecated operator (<*)
+
+
 andMapLeft : Parser s a -> Parser s x -> Parser s a
-andMapLeft lp rp = lp 
-    |> map always 
-    |> andMap rp
+andMapLeft lp rp =
+    lp
+        |> map always
+        |> andMap rp
+
 
 attributeParser : Parser s SvgAttribute
-attributeParser = andMap
-    (optional "" 
-        <| andMapLeft
-            (andMapRight
-                (string "=\"") 
-                (regex "[^\"]*")
-            ) 
-        <| string "\""
-    )
-    <| map Tuple.pair 
-    <| regex "[^=>/]+"
+attributeParser =
+    andMap
+        (optional "" <|
+            andMapLeft
+                (andMapRight
+                    (string "=\"")
+                    (regex "[^\"]*")
+                )
+            <|
+                string "\""
+        )
+    <|
+        map Tuple.pair <|
+            regex "[^=>/]+"
 
 
 openingParser : Parser s Element
-openingParser = flip andMap
-    ( andMap
-        (regex "[^/>\\s]+")
-        (map
-            (\_ tagName attributes ->
-                Element tagName attributes []
+openingParser =
+    flip andMap
+        (andMap
+            (regex "[^/>\\s]+")
+            (map
+                (\_ tagName attributes ->
+                    Element tagName attributes []
+                )
+                (string "<")
             )
-            (string "<")
         )
-    )
-    ( andMapLeft
-        ( andMapRight
-            whitespace 
-            (sepBy whitespace attributeParser)
+        (andMapLeft
+            (andMapRight
+                whitespace
+                (sepBy whitespace attributeParser)
+            )
+            whitespace
         )
-        whitespace
-    )
 
 
 closingOrChildrenParser : Element -> Parser s Element
 closingOrChildrenParser element =
     let
-        childrenParser = map
-            (\children -> { element | children = children })
-            ( andMapLeft
+        childrenParser =
+            map
+                (\children -> { element | children = children })
                 (andMapLeft
-                    ( andMapRight
-                        ( andMapRight whitespace
-                            (string ">"))
-                        (many nodeParser)
-                    )
-                    (whitespace)
-                )
-                (string ("</" ++ element.name ++ ">"))
-            )
-    in
-        lazy <|
-            \_ ->
-                choice
-                    [ andMapRight
-                        ( andMapRight
-                            whitespace 
-                            (string "/>")
+                    (andMapLeft
+                        (andMapRight
+                            (andMapRight whitespace
+                                (string ">")
+                            )
+                            (many nodeParser)
                         )
-                        (succeed element)
-                    , childrenParser
-                    ]
+                        whitespace
+                    )
+                    (string ("</" ++ element.name ++ ">"))
+                )
+    in
+    lazy <|
+        \_ ->
+            choice
+                [ andMapRight
+                    (andMapRight
+                        whitespace
+                        (string "/>")
+                    )
+                    (succeed element)
+                , childrenParser
+                ]
 
 
 elementParser : Parser s SvgNode
 elementParser =
     lazy <|
-        \_ -> map SvgElement
-            (andThen closingOrChildrenParser 
-                ( whitespace
-                    |> map (flip always)
-                    |> andMap openingParser
+        \_ ->
+            map SvgElement
+                (andThen closingOrChildrenParser
+                    (whitespace
+                        |> map (flip always)
+                        |> andMap openingParser
+                    )
                 )
-            )
 
 
 textParser : Parser s SvgNode
 textParser =
     lazy <|
-        \_ -> map
-            SvgText
-            ( andMapRight
-                whitespace
-                <| regex "[^<]+"
-            )
+        \_ ->
+            map
+                SvgText
+                (andMapRight
+                    whitespace
+                 <|
+                    regex "[^<]+"
+                )
 
 
 commentParser : Parser s SvgNode
 commentParser =
     lazy <|
-        \_ -> map
-            (SvgComment
-                << String.fromList
-            )
-            ( andMapRight
-                ( andMapRight 
-                    whitespace 
-                    <| string "<!--"
+        \_ ->
+            map
+                (SvgComment
+                    << String.fromList
                 )
-                <| manyTill anyChar 
-                <| string "-->"
-            )
+                (andMapRight
+                    (andMapRight
+                        whitespace
+                     <|
+                        string "<!--"
+                    )
+                 <|
+                    manyTill anyChar <|
+                        string "-->"
+                )
 
 
 nodeParser : Parser s SvgNode
@@ -222,31 +244,34 @@ nodeToSvg svgNode =
 {-| Parse xml declaration
 -}
 xmlDeclarationParser : Parser s String
-xmlDeclarationParser = map
-    String.fromList
-    ( andMapRight
-        ( andMapRight whitespace
-            <| string "<?xml"
+xmlDeclarationParser =
+    map
+        String.fromList
+        (andMapRight
+            (andMapRight whitespace <|
+                string "<?xml"
+            )
+         <|
+            manyTill anyChar (string "?>")
         )
-        <| manyTill anyChar (string "?>")
-    )
 
 
 {-| Parses `String` to `SvgNode`. Normally you will use `parse` instead of this.
 
     parse "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
-        == Ok (SvgElement (Element "svg" [("xmlns", "http://www.w3.org/2000/svg")] []))
+        == Ok (SvgElement (Element "svg" [ ( "xmlns", "http://www.w3.org/2000/svg" ) ] []))
 
 -}
 parseToNode : String -> Result String SvgNode
 parseToNode input =
-    case Combine.runParser 
-        ( andMapRight
-            (optional "" xmlDeclarationParser) 
-            nodeParser
-        ) 
-        [] 
-        input 
+    case
+        Combine.runParser
+            (andMapRight
+                (optional "" xmlDeclarationParser)
+                nodeParser
+            )
+            []
+            input
     of
         Ok ( _, _, svgNode ) ->
             Ok svgNode
@@ -267,10 +292,11 @@ parse input =
                         Ok <|
                             svg (List.map toAttribute element.attributes)
                                 (List.map nodeToSvg element.children)
+
                     else
                         Err "Top element is not svg"
 
                 _ ->
                     Err "Top element is not svg"
     in
-        parseToNode input |> Result.andThen toHtml
+    parseToNode input |> Result.andThen toHtml

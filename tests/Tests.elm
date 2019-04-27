@@ -1,9 +1,9 @@
-module Tests exposing (..)
+module Tests exposing (suite, testParseToNode)
 
-import Expect exposing (Expectation)
-import Test exposing (..)
-import SvgParser exposing (..)
 import Cases exposing (all)
+import Expect exposing (Expectation)
+import SvgParser exposing (..)
+import Test exposing (..)
 
 
 testParseToNode : ( String, String, Element ) -> Test
