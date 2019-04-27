@@ -1,6 +1,6 @@
 # elm-svg-parser
 
-**NOTE: This repo is not maintained any more. Feel free to fork and upload to elm-packages by yourself.**
+**Note: This repo is an update to work with elm 0.19.**
 
 A library to parse String to SVG.
 
