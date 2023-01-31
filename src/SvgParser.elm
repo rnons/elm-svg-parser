@@ -1,6 +1,6 @@
 module SvgParser exposing
     ( SvgNode(..), Element, SvgAttribute
-    , parse, parseToNode, nodeToSvg, toAttribute
+    , parse, parseToNode, parseToNodes, nodeToSvg, toAttribute
     )
 
 {-| String to SVG parser
@@ -13,7 +13,7 @@ module SvgParser exposing
 
 # Parsing
 
-@docs parse, parseToNode, nodeToSvg, toAttribute
+@docs parse, parseToNode, parseToNodes, nodeToSvg, toAttribute
 
 -}
 
@@ -275,6 +275,26 @@ parseToNode input =
     of
         Ok ( _, _, svgNode ) ->
             Ok svgNode
+
+        Err ( _, stream, errors ) ->
+            Err <| String.join " or " errors
+
+
+{-| Same as parseToNode, but returns a list of all the nodes in the string.
+-}
+parseToNodes : String -> Result String (List SvgNode)
+parseToNodes input =
+    case
+        Combine.runParser
+            (andMapRight
+                (optional "" xmlDeclarationParser)
+                (many nodeParser)
+            )
+            []
+            input
+    of
+        Ok ( _, _, svgNodes ) ->
+            Ok svgNodes
 
         Err ( _, stream, errors ) ->
             Err <| String.join " or " errors
