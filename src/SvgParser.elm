@@ -21,6 +21,7 @@ import Combine exposing (..)
 import Combine.Char exposing (anyChar)
 import Html exposing (Html)
 import Svg exposing (Attribute, Svg, node, svg, text)
+import Svg.Attributes as Svg
 import VirtualDom exposing (attribute)
 
 
@@ -216,7 +217,12 @@ nodeParser =
 -}
 toAttribute : SvgAttribute -> Attribute msg
 toAttribute ( name, value ) =
-    attribute name value
+    if name == "xlink:href" then
+        -- I cannot explain why this helps!
+        Svg.xlinkHref value
+
+    else
+        attribute name value
 
 
 elementToSvg : Element -> Svg msg
@@ -256,6 +262,26 @@ xmlDeclarationParser =
         )
 
 
+{-| Same as parseToNode, but returns a list of all the nodes in the string.
+-}
+parseToNodes : String -> Result String (List SvgNode)
+parseToNodes input =
+    case
+        Combine.runParser
+            (andMapRight
+                (optional "" xmlDeclarationParser)
+                (many nodeParser)
+            )
+            []
+            input
+    of
+        Ok ( _, _, svgNodes ) ->
+            Ok svgNodes
+
+        Err ( _, _, errors ) ->
+            Err <| String.join " or " errors
+
+
 {-| Parses `String` to `SvgNode`. Normally you will use `parse` instead of this.
 
     parse "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
@@ -276,47 +302,33 @@ parseToNode input =
         Ok ( _, _, svgNode ) ->
             Ok svgNode
 
-        Err ( _, stream, errors ) ->
+        Err ( _, _, errors ) ->
             Err <| String.join " or " errors
 
 
-{-| Same as parseToNode, but returns a list of all the nodes in the string.
--}
-parseToNodes : String -> Result String (List SvgNode)
-parseToNodes input =
-    case
-        Combine.runParser
-            (andMapRight
-                (optional "" xmlDeclarationParser)
-                (many nodeParser)
-            )
-            []
-            input
-    of
-        Ok ( _, _, svgNodes ) ->
-            Ok svgNodes
-
-        Err ( _, stream, errors ) ->
-            Err <| String.join " or " errors
-
-
-{-| Parses `String` to `Html msg`. Usually this is the only function you need.
+{-| Parses `String` to `Html msg`. This function filters top level comments to find the first `<svg>` element.
+Additional `<svg>` elements are ignored.
 -}
 parse : String -> Result String (Html msg)
 parse input =
     let
-        toHtml svgNode =
-            case svgNode of
-                SvgElement element ->
+        toHtml svgNodes =
+            case svgNodes of
+                (SvgElement element) :: tl ->
                     if element.name == "svg" then
                         Ok <|
                             svg (List.map toAttribute element.attributes)
                                 (List.map nodeToSvg element.children)
 
                     else
-                        Err "Top element is not svg"
+                        -- hd was not valid svg starting point, let's try the next one
+                        toHtml tl
 
-                _ ->
-                    Err "Top element is not svg"
+                _ :: tl ->
+                    -- hd was e.g. a Comment, let's try the next one
+                    toHtml tl
+
+                [] ->
+                    Err "No svg found"
     in
-    parseToNode input |> Result.andThen toHtml
+    parseToNodes input |> Result.andThen toHtml
