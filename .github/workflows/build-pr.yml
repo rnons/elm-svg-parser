@@ -1,0 +1,34 @@
+name: Build Pull Request
+run-name: Build PR ${{ github.event.number }} «${{ github.event.pull_request.title }}» (${{ github.actor}})
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+
+  RunTests:
+    name: 👩🏾‍🔬 Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install elm, elm-format and cache the ELM_HOME directory
+        uses: mpizenberg/elm-tooling-action@v1.2
+        with:
+          cache-key: elm-home-${{ hashFiles('elm-tooling.json', 'elm.json') }}
+
+      - name: Making sure the installation worked
+        run: |
+          elm --version && \
+          elm-test-rs --version
+
+      - name: Run tests with node
+        run: elm-test-rs
+
+      - name: Run tests with deno
+        run: elm-test-rs --deno
