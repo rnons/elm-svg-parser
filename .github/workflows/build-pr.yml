@@ -1,0 +1,44 @@
+name: Build Pull Request
+run-name: Build PR ${{ github.event.number }} «${{ github.event.pull_request.title }}» (${{ github.actor}})
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - master
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+
+  RunTests:
+    name: 👩🏾‍🔬 Run Tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install elm and elm-test-rs
+        run: npm install
+
+      - name: Making sure the installation worked
+        run: |
+          npx elm --version
+          npx elm-test-rs --version
+
+      - name: Check format on sources
+        run: npx elm-format --validate src/
+
+      - name: Check format on tests
+        run: npx elm-format --validate tests/
+
+      - name: Output format errors
+        if: failure()
+        run: |
+          npx elm-format  --elm-version=0.19 --yes .
+          git diff
+
+      - name: Run tests
+        run: npx elm-test-rs
