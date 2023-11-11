@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "elm-format": "^0.8.7",
+    "elm-test-rs": "^3.0.0-5"
+  },
+  "dependencies": {
+    "elm": "^0.19.1-6"
+  }
+}
