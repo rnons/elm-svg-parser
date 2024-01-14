@@ -1,7 +1,7 @@
 module Tests exposing (suite, testParseToNode)
 
 import Cases exposing (all)
-import Expect exposing (Expectation)
+import Expect
 import SvgParser exposing (..)
 import Test exposing (..)
 
