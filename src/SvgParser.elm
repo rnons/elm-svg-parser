@@ -262,6 +262,14 @@ xmlDeclarationParser =
         )
 
 
+{-| Parse DOCTYPE declaration
+-}
+doctypeDeclarationParser : Parser s String
+doctypeDeclarationParser =
+    andMapRight whitespace <|
+        regex "<!DOCTYPE(?:\"(?:\\\\.|[^\"])*\"|'(?:\\\\.|[^'])*'|[^>])*>"
+
+
 {-| Same as parseToNode, but returns a list of all the nodes in the string.
 -}
 parseToNodes : String -> Result String (List SvgNode)
@@ -270,7 +278,10 @@ parseToNodes input =
         Combine.runParser
             (andMapRight
                 (optional "" xmlDeclarationParser)
-                (many nodeParser)
+                (andMapRight
+                    (optional "" doctypeDeclarationParser)
+                    (many nodeParser)
+                )
             )
             []
             input
@@ -294,7 +305,9 @@ parseToNode input =
         Combine.runParser
             (andMapRight
                 (optional "" xmlDeclarationParser)
-                nodeParser
+                (andMapRight (optional "" doctypeDeclarationParser)
+                    nodeParser
+                )
             )
             []
             input
